@@ -117,7 +117,6 @@ app.get("/index", async (req, res) => {
 async function scrapeFlipkart(searchText,req) {
     const flipkartUrl = `https://www.flipkart.com/search?q=${searchText}`;
     const browser = await puppeteer.launch({ 
-        headless:"new",
         args:[
             "--disable-setuid-sandbox",
             "--no-sandbox",
@@ -161,7 +160,6 @@ async function scrapeFlipkart(searchText,req) {
 async function scrapeAmazon(searchText,req) {
     const amazonUrl = `https://www.amazon.in/s?k=${searchText}`;
     const browser = await puppeteer.launch({ 
-        headless:"new",
         args:[
             "--disable-setuid-sandbox",
             "--no-sandbox",
