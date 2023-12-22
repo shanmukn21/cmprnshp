@@ -176,7 +176,7 @@ async function scrapeAmazon(searchText,req) {
         : puppeteer.executablePath(),
      });
     const page = await browser.newPage();
-    await page.goto(amazonUrl);
+    await page.goto(amazonUrl,{timeout: 360000});
     userProfile = req.session.userProfile;
     console.log("fetching",searchText,"for",userProfile,"from amazon");
     const amazonData = await page.evaluate(() => {
