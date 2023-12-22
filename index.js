@@ -1,3 +1,8 @@
+const fs = require('fs');
+const logFile = fs.createWriteStream('./puppeteer_warnings.log', { flags: 'a' });
+process.stderr.write = (chunk, encoding, callback) => {
+  logFile.write(chunk, encoding, callback);
+};
 const express = require('express');
 const session = require('express-session');
 const mongoose = require('mongoose');
