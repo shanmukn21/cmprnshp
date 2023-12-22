@@ -119,48 +119,6 @@ app.get("/index", async (req, res) => {
         await processSearch(name, req, res);
     }
 });
-async function scrapeAmazon(searchText,req) {
-    const amazonUrl = `https://www.amazon.in/s?k=${searchText}`;
-    const browser = await puppeteer.launch({ 
-        args:[
-            "--disable-setuid-sandbox",
-            "--no-sandbox",
-            "--single-process",
-            "--no-zygote",
-        ],
-        executablePath: process.env.NODE_ENV === "production" 
-        ? process.env.PUPPETEER_EXECUTABLE_PATH 
-        : puppeteer.executablePath(),
-     });
-    const page = await browser.newPage();
-    await page.goto(amazonUrl,{timeout: 360000});
-    userProfile = req.session.userProfile;
-    console.log("fetching",searchText,"for",userProfile,"from amazon");
-    const amazonData = await page.evaluate(() => {
-        const data = [];
-        const products = document.querySelectorAll('div.sg-col-20-of-24.s-result-item.s-asin.sg-col-0-of-12.sg-col-16-of-20.sg-col.s-widget-spacing-small.sg-col-12-of-16,div.sg-col-4-of-24.sg-col-4-of-12.s-result-item.s-asin.sg-col-4-of-16.sg-col.s-widget-spacing-small.sg-col-4-of-20');
-        products.forEach(product => {
-            const nameElement = product.querySelector('span.a-size-medium.a-color-base.a-text-normal,span.a-size-base-plus.a-color-base.a-text-normal');
-            const pcompanyElement = product.querySelector(".a-size-mini.s-line-clamp-1,span.a-size-base-plus.a-color-base");
-            const priceElement = product.querySelector('span.a-offscreen');
-            const photoElement = product.querySelector('img.s-image');
-            const linkElement = product.querySelector('a.a-link-normal.s-no-outline');
-            if (!nameElement || !priceElement || !photoElement || !linkElement) {
-                console.log("Skipping iteration as data not found for a product on Amazon.");
-                return;
-            }
-            const name = nameElement.textContent;
-            const pcompany = pcompanyElement ? pcompanyElement.textContent : "";
-            const price = priceElement.textContent;
-            const photo = photoElement.src;
-            const link = linkElement.href;
-            data.push({ company: 'Amazon', pcompany, name, price, photo, link });
-        });
-        return data;
-    });
-    await browser.close();
-    return amazonData;
-}
 async function scrapeFlipkart(searchText,req) {
     const flipkartUrl = `https://www.flipkart.com/search?q=${searchText}`;
     const browser = await puppeteer.launch({ 
@@ -175,7 +133,7 @@ async function scrapeFlipkart(searchText,req) {
         : puppeteer.executablePath(),
      });
     const page = await browser.newPage();
-    await page.goto(flipkartUrl,{timeout: 360000});
+    await page.goto(flipkartUrl);
     userProfile = req.session.userProfile;
     console.log("fetching",searchText,"for",userProfile,"from flipkart");
     const flipkartData = await page.evaluate(() => {
@@ -203,6 +161,48 @@ async function scrapeFlipkart(searchText,req) {
     });
     await browser.close();
     return flipkartData;
+}
+async function scrapeAmazon(searchText,req) {
+    const amazonUrl = `https://www.amazon.in/s?k=${searchText}`;
+    const browser = await puppeteer.launch({ 
+        args:[
+            "--disable-setuid-sandbox",
+            "--no-sandbox",
+            "--single-process",
+            "--no-zygote",
+        ],
+        executablePath: process.env.NODE_ENV === "production" 
+        ? process.env.PUPPETEER_EXECUTABLE_PATH 
+        : puppeteer.executablePath(),
+     });
+    const page = await browser.newPage();
+    await page.goto(amazonUrl);
+    userProfile = req.session.userProfile;
+    console.log("fetching",searchText,"for",userProfile,"from amazon");
+    const amazonData = await page.evaluate(() => {
+        const data = [];
+        const products = document.querySelectorAll('div.sg-col-20-of-24.s-result-item.s-asin.sg-col-0-of-12.sg-col-16-of-20.sg-col.s-widget-spacing-small.sg-col-12-of-16,div.sg-col-4-of-24.sg-col-4-of-12.s-result-item.s-asin.sg-col-4-of-16.sg-col.s-widget-spacing-small.sg-col-4-of-20');
+        products.forEach(product => {
+            const nameElement = product.querySelector('span.a-size-medium.a-color-base.a-text-normal,span.a-size-base-plus.a-color-base.a-text-normal');
+            const pcompanyElement = product.querySelector(".a-size-mini.s-line-clamp-1,span.a-size-base-plus.a-color-base");
+            const priceElement = product.querySelector('span.a-offscreen');
+            const photoElement = product.querySelector('img.s-image');
+            const linkElement = product.querySelector('a.a-link-normal.s-no-outline');
+            if (!nameElement || !priceElement || !photoElement || !linkElement) {
+                console.log("Skipping iteration as data not found for a product on Amazon.");
+                return;
+            }
+            const name = nameElement.textContent;
+            const pcompany = pcompanyElement ? pcompanyElement.textContent : "";
+            const price = priceElement.textContent;
+            const photo = photoElement.src;
+            const link = linkElement.href;
+            data.push({ company: 'Amazon', pcompany, name, price, photo, link });
+        });
+        return data;
+    });
+    await browser.close();
+    return amazonData;
 }
 async function processSearch(searchText, req, res) {
     searchQueue.push({ searchText, req, res });
